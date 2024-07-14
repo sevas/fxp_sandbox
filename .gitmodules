@@ -4,3 +4,7 @@
 [submodule "deps/fpm"]
 	path = deps/fpm
 	url = https://github.com/MikeLankamp/fpm
+
+[submodule "python/Infinite-ISP_ReferenceModel"]
+    path = python/Infinite-ISP_ReferenceModel
+    url = https://github.com/10x-Engineers/Infinite-ISP_ReferenceModel
