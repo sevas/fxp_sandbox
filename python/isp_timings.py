@@ -24,10 +24,22 @@ def print_timings():
 
     df = DataFrame(timings)
     print("Timings: (units: ms)")
-    print(df.describe())
+    print(df[1:].describe())
     try:
         from matplotlib import pyplot as plt
-        df.plot()
+        df[1:].plot()
         plt.show()
+    except ImportError:
+        pass
+
+
+def save_plot(filename):
+    from pandas import DataFrame
+
+    try:
+        from matplotlib import pyplot as plt
+        df = DataFrame(timings)
+        df[1:].plot()
+        plt.savefig(filename)
     except ImportError:
         pass

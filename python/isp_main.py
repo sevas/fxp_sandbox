@@ -5,13 +5,21 @@ import matplotlib.pyplot as plt
 
 import isp_types
 import isp_datasets
-from isp_timings import time_this
+from isp_timings import time_this, save_plot
 
-USE_BACKEND = "numpy"
+USE_BACKEND = "numba"
 WITH_PLOTS = True
 
+try_count = 10
+if try_count > 1:
+    WITH_PLOTS = False
+
+
 if USE_BACKEND == "numpy":
-    from isp_np import awb, wb, demos, ccm
+    from isp_np import awb, wb, demos, ccm, reset
+elif USE_BACKEND == "numba":
+    from isp_nb import awb, wb, ccm, reset
+    from isp_np import demos
 
 
 def levels(im):
@@ -42,7 +50,7 @@ lmx = np.array([
     config["color_correction_matrix"]["corrected_red"],
     config["color_correction_matrix"]["corrected_green"],
     config["color_correction_matrix"]["corrected_blue"],
-]).astype(np.int16)
+]).astype(np.float32)
 
 bayer_opencv_patterns = {
     isp_types.BayerPattern.GRBG: cv2.COLOR_BAYER_GRBG2RGB
@@ -51,21 +59,28 @@ bayer_opencv_patterns = {
 # RAW
 raw_image = raw_image.reshape(height, width)
 imshow(raw_image, "RAW")
-try_count = 1
+
 
 for each in range(try_count):
-    # WB
-    with time_this("awb"):
-        rgain, bgain = awb(raw_image, bayer_pattern)
-        im_wb = wb(raw_image, rgain, bgain, bayer_pattern)
+    reset()
+    with time_this("total"):
+        # WB
+        with time_this("awb"):
+            rgain, bgain = awb(raw_image, bayer_pattern)
+        with time_this("wb"):
+            im_wb = wb(raw_image, rgain, bgain, bayer_pattern)
+        imshow(im_wb, "wb")
 
-    # DEMOS
-    with time_this("demos"):
-        im_demos = demos(im_wb, bayer_pattern)
-        # im_demos = cv2.cvtColor(im_wb.astype(np.uint16), bayer_opencv_patterns[bayer_pattern])
-    imshow(im_demos.astype("u2"), "demos grbg -> rgb")
+        # DEMOS
+        with time_this("demos"):
+            im_demos = demos(im_wb, bayer_pattern)
+            # im_demos = cv2.cvtColor(im_wb.astype(np.uint16), bayer_opencv_patterns[bayer_pattern])
+        imshow(im_demos.astype("u2"), "demos grbg -> rgb")
 
-    # CCM
-    with time_this("ccm"):
-        im_ccm = ccm(im_demos, lmx)
-    imshow(im_ccm, "rgb->ccm")
+        im_demos = im_demos.astype(np.float32)
+        # CCM
+        with time_this("ccm"):
+            im_ccm = ccm(im_demos, lmx)
+        imshow(im_ccm, "rgb->ccm")
+
+save_plot(f"timings_{USE_BACKEND}.png")

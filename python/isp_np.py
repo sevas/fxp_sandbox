@@ -47,9 +47,9 @@ def demos(im, bayer_pattern):
 
     # Interpolate the Red channel
     color_image[0:height:2, 0:width:2, 0] = R
-    color_image[0:height:2, 1:width-1:2, 0] = (R[:, :-1] + R[:, 1:]) // 2
-    color_image[1:height-1:2, 0:width:2, 0] = (R[:-1, :] + R[1:, :]) // 2
-    color_image[1:height-1:2, 1:width-1:2, 0] = (R[:-1, :-1] + R[:-1, 1:] + R[1:, :-1] + R[1:, 1:]) // 4
+    color_image[0:height:2, 1:width - 1:2, 0] = (R[:, :-1] + R[:, 1:]) // 2
+    color_image[1:height - 1:2, 0:width:2, 0] = (R[:-1, :] + R[1:, :]) // 2
+    color_image[1:height - 1:2, 1:width - 1:2, 0] = (R[:-1, :-1] + R[:-1, 1:] + R[1:, :-1] + R[1:, 1:]) // 4
 
     # Interpolate the Green channel
     color_image[0:height:2, 0:width:2, 1] = G1
@@ -59,9 +59,9 @@ def demos(im, bayer_pattern):
 
     # Interpolate the Blue channel
     color_image[1:height:2, 1:width:2, 2] = B
-    color_image[0:height:2, 1:width-1:2, 2] = (B[:, :-1] + B[:, 1:]) // 2
-    color_image[1:height-1:2, 0:width:2, 2] = (B[:-1, :] + B[1:, :]) // 2
-    color_image[0:height-2:2, 0:width-2:2, 2] = (B[:-1, :-1] + B[:-1, 1:] + B[1:, :-1] + B[1:, 1:]) // 4
+    color_image[0:height:2, 1:width - 1:2, 2] = (B[:, :-1] + B[:, 1:]) // 2
+    color_image[1:height - 1:2, 0:width:2, 2] = (B[:-1, :] + B[1:, :]) // 2
+    color_image[0:height - 2:2, 0:width - 2:2, 2] = (B[:-1, :-1] + B[:-1, 1:] + B[1:, :-1] + B[1:, 1:]) // 4
 
     return color_image
 
@@ -70,3 +70,10 @@ def ccm(im, ccm):
     h, w, _ = im.shape
     im_ccm = (im.reshape(-1, 3) @ ccm.T) / 1024
     return np.clip(im_ccm.reshape(h, w, 3), 0, 1023).astype(np.uint16)
+
+
+def reset():
+    pass
+
+
+__all__ = ["awb", "wb", "demos", "ccm", "reset"]
