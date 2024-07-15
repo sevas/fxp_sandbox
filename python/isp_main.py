@@ -7,10 +7,10 @@ import isp_types
 import isp_datasets
 from isp_timings import time_this, save_plot
 
-USE_BACKEND = "numba"
+USE_BACKEND = "numpy"
 WITH_PLOTS = True
 
-try_count = 10
+try_count = 1
 if try_count > 1:
     WITH_PLOTS = False
 
@@ -18,8 +18,7 @@ if try_count > 1:
 if USE_BACKEND == "numpy":
     from isp_np import awb, wb, demos, ccm, reset
 elif USE_BACKEND == "numba":
-    from isp_nb import awb, wb, ccm, reset
-    from isp_np import demos
+    from isp_nb import awb, wb, demos, ccm, reset
 
 
 def levels(im):
@@ -34,6 +33,7 @@ def norm(im: NDArray):
 def imshow(im, title):
     if not WITH_PLOTS:
         return
+    print(title, levels(im))
     plt.imshow(im)
     plt.title("*** " + title)
     plt.colorbar()
