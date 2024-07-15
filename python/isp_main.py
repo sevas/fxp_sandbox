@@ -2,15 +2,16 @@ import cv2
 import numpy as np
 from numpy.typing import NDArray
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 import isp_types
 import isp_datasets
 from isp_timings import time_this, save_plot
 
-USE_BACKEND = "numpy"
+USE_BACKEND = "fxp"
 WITH_PLOTS = True
 
-try_count = 1
+try_count = 10
 if try_count > 1:
     WITH_PLOTS = False
 
@@ -19,6 +20,8 @@ if USE_BACKEND == "numpy":
     from isp_np import awb, wb, demos, ccm, reset
 elif USE_BACKEND == "numba":
     from isp_nb import awb, wb, demos, ccm, reset
+elif USE_BACKEND == "fxp":
+    from isp_fxp import awb, wb, demos, ccm, reset
 
 
 def levels(im):
@@ -31,9 +34,9 @@ def norm(im: NDArray):
 
 
 def imshow(im, title):
+    print(title, levels(im))
     if not WITH_PLOTS:
         return
-    print(title, levels(im))
     plt.imshow(im)
     plt.title("*** " + title)
     plt.colorbar()
@@ -61,9 +64,11 @@ raw_image = raw_image.reshape(height, width)
 imshow(raw_image, "RAW")
 
 
-for each in range(try_count):
+for each in tqdm(range(try_count), total=try_count):
     reset()
+
     with time_this("total"):
+        imshow(raw_image, "RAW")
         # WB
         with time_this("awb"):
             rgain, bgain = awb(raw_image, bayer_pattern)
@@ -79,8 +84,8 @@ for each in range(try_count):
 
         im_demos = im_demos.astype(np.float32)
         # CCM
-        with time_this("ccm"):
-            im_ccm = ccm(im_demos, lmx)
-        imshow(im_ccm.astype(np.uint16), "rgb->ccm")
+        # with time_this("ccm"):
+        #     im_ccm = ccm(im_demos, lmx)
+        # imshow(im_ccm.astype(np.uint16), "rgb->ccm")
 
 save_plot(f"timings_{USE_BACKEND}.png")
