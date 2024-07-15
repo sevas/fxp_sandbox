@@ -81,6 +81,6 @@ for each in range(try_count):
         # CCM
         with time_this("ccm"):
             im_ccm = ccm(im_demos, lmx)
-        imshow(im_ccm, "rgb->ccm")
+        imshow(im_ccm.astype(np.uint16), "rgb->ccm")
 
 save_plot(f"timings_{USE_BACKEND}.png")

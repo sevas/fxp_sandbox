@@ -172,7 +172,7 @@ def ccm(im, ccm_mat):
 
     out = buffers["ccm"]
     _ccm_nb(im, ccm_mat, out)
-    return out.astype(np.uint16)
+    return out
 
 
 def reset():
