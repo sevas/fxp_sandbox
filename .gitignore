@@ -3,3 +3,6 @@ build
 
 .idea
 python/**/out_frames/*.*
+
+__pycache__
+*.py[cod]
