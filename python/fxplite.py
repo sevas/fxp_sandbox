@@ -8,6 +8,7 @@ class Fxplite:
     n_int: int
     n_frac: int
     signed: bool
+    fract_mul: int
 
     def nbits(self):
         return self.n_int + self.n_frac + int(self.signed)
@@ -16,7 +17,7 @@ class Fxplite:
         """Return the value of the fixed-point number to a regular python scalar"""
         s = -1 if self.signed else 1
         return s * (self.stored_int >> self.n_frac) + (
-                    self.stored_int & (0xffff >> (16 - self.n_frac))) / 2 ** self.n_frac
+                self.stored_int & (0xffff >> (16 - self.n_frac))) / 2 ** self.n_frac
 
     def int_range(self):
         return 2 ** (self.n_int + self.n_frac)
@@ -39,17 +40,45 @@ class Fxplite:
         self.stored_int += other.stored_int
         return self
 
+    def __sub__(self, other: Self) -> Self:
+        self.stored_int -= other.stored_int
+        return self
+
+    def __mul__(self, other: Self) -> Self:
+        self.stored_int *= other.stored_int
+        return self
+
+    def __divmod__(self, other):
+        raise NotImplementedError
+
+    def __truediv__(self, other: Self) -> Self:
+        self.stored_int /= other.stored_int
+        return self
+
+    def __eq__(self, other: Self) -> bool:
+        return self.stored_int == other.stored_int
+
+    def __ne__(self, other: Self) -> bool:
+        return self.stored_int != other.stored_int
+
+    def __lt__(self, other: Self) -> bool:
+        return self.stored_int < other.stored_int
+
+    def __le__(self, other: Self) -> bool:
+        return self.stored_int <= other.stored_int
+
+    def overflow(self):
+        return self.stored_int > 2 ** (self.n_int + self.n_frac)
+
 
 def make_fxp(val: float | int, n_int: int, n_frac: int, signed: bool = False) -> Fxplite:
-    stored_int = int(val)
-
+    # stored_int = int(val)
     # tbd if we keep this check, to be timed
-    if stored_int > 2 ** n_int:
-        raise OverflowError(f"Value {val} is too large for n_frac={n_frac} and n_int={n_int}")
-
-    stored_frac = int((val - stored_int) * 2 ** n_frac)
-    stored_int = stored_int << n_frac
-    return Fxplite(stored_int + stored_frac, n_int, n_frac, signed)
+    # if int(val) > 2 ** n_int:
+    #     raise OverflowError(f"Value {val} is too large for n_frac={n_frac} and n_int={n_int}")
+    fract_mul = 2 ** n_frac
+    stored_int = int(val * fract_mul)
+    return Fxplite(stored_int, n_int, n_frac, signed, fract_mul)
 
 
 def U(n: int, f: int) -> Callable[[int | float], Fxplite]:
@@ -57,8 +86,6 @@ def U(n: int, f: int) -> Callable[[int | float], Fxplite]:
         return make_fxp(x, n_int=n, n_frac=f, signed=False)
 
     return wrapped
-
-
 
 
 def scalar_from_fxp(f: Fxplite) -> float | int:
@@ -79,6 +106,7 @@ def main():
 
     a = U(12, 2)(3.4)
     assert a == make_fxp(3.4, 12, 2, False)
+
 
 if __name__ == '__main__':
     main()

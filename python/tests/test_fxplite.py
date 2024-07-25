@@ -36,8 +36,27 @@ class TestFXPLiteSpec:
         assert a.stored_int == 0b111_11
 
 
-@pytest.mark.benchmark(group="addition")
-class TestBenchmarkAddition:
+@pytest.mark.benchmark(group="create")
+class TestBenchmarkCreate:
+    @staticmethod
+    def test_benchmark_fxplite(benchmark):
+        benchmark(lambda: make_fxp(1, 2, 2, False))
+
+    @staticmethod
+    def test_benchmark_fxp(benchmark):
+        benchmark(lambda: Fxp(1, n_int=2, n_frac=2, signed=False))
+
+    @staticmethod
+    def test_benchmark_scalar_int(benchmark):
+        benchmark(lambda: 1)
+
+    @staticmethod
+    def test_benchmark_scalar_npint(benchmark):
+        benchmark(lambda: np.uint32(1))
+
+
+@pytest.mark.benchmark(group="add")
+class TestBenchmarkAdd:
     @staticmethod
     def test_benchmark_fxplite(benchmark):
         a = make_fxp(1, 2, 2, False)
