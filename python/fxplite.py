@@ -31,8 +31,16 @@ class Fxplite:
         This is to be used before performing the next arithmetic operation.
         User must ensure that the new encoding is sufficient to represent the result.
         """
+        fracdiff = self.n_frac - n_frac
+        if fracdiff < 0:
+            fracdiff = -fracdiff
+            self.stored_int <<= fracdiff
+        elif fracdiff > 0:
+            self.stored_int >>= fracdiff
         self.n_int = n_int
         self.n_frac = n_frac
+        self.fract_mul = 2 ** n_frac
+
         return self
 
     def __add__(self, other: Self) -> Self:
@@ -93,14 +101,14 @@ def scalar_from_fxp(f: Fxplite) -> float | int:
 
 
 def main():
-    f = Fxplite(12, 3, 3, False)
-    print(Fxplite(12, 2, 3, False).val())
-    print(Fxplite(21, 2, 3, False).val())
-    print(Fxplite(31, 2, 3, False).val())
+    f = Fxplite(12, 3, 3, False, 2**3)
+    print(Fxplite(12, 2, 3, False, 2**3).val())
+    print(Fxplite(21, 2, 3, False, 2**3).val())
+    print(Fxplite(31, 2, 3, False, 2**3).val())
 
     for i in range(f.int_range() + 1):
         b = bin(i)
-        f = Fxplite(i, 3, 3, False)
+        f = Fxplite(i, 3, 3, False, 2**3)
         s = scalar_from_fxp(f)
         print(f"{b=} {s=}")
 

@@ -15,6 +15,13 @@ class TestFXPLiteSpec:
         assert a + b == c
 
     @staticmethod
+    def test_addition_mixed_sizes():
+        a = make_fxp(2.5, 3, 3, False)
+        b = make_fxp(1.75, 3, 2, False)
+
+        assert a + b.u(3,3) == make_fxp(4.25, 3, 3, False)
+
+    @staticmethod
     def test_internal_repr():
         a = make_fxp(1, 2, 2, False)
         assert a.stored_int == 0b01_00
