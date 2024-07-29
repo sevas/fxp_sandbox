@@ -1,9 +1,43 @@
+"""
+fxplite - Fixed-point arithmetic for Python
+===========================================
+
+This module provides a lightweight implementation of fixed-point arithmetic for Python.
+We try to be mostly compatible with the fxpmath package, but with a simpler implementation
+that removes some of the more advanced features, focusing on speed.
+
+
+Design Guidelines
+=================
+- no automatic scaling of the fixed-point number, user has to request it explicitly
+  by setting the n_int and n_frac parameters
+- we implement the minimal set of operations for fixed-point math. No automatic overflow
+  or saturation
+- we aim to make the API as close as possible to the Fxp class from the fxpmath package
+- minimal use of functions within the fxplite object itself; mathematical operations
+  are inlined where needed to avoid overhead of a function call. Do not hesitate to copy
+  the contents of functions into another function if it makes the code faster. The top
+  level functions are reference implementations.
+- results from functions that, in C or C++, could be macros/templates/const expr depending
+  on bit width are stored in a cache when they have been empirically measured to be slower
+  than a dict lookup
+
+"""
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Callable, Self
+
+
+@lru_cache
+def fxplite_half_val(n_frac: int) -> int:
+    return 1 << (n_frac-1)
+
+
 
 
 @dataclass
 class Fxplite:
+    # todo: unclear that dataclass is really faster;
     stored_int: int
     n_int: int
     n_frac: int
@@ -45,15 +79,24 @@ class Fxplite:
 
     def __add__(self, other: Self) -> Self:
         # return make_fxp(self.val() + other.val(), self.n_frac, self.n_int + 2, self.signed)
+        return Fxplite(self.stored_int + other.stored_int, self.n_int, self.n_frac, self.signed, self.fract_mul)
+
+    def __iadd__(self, other: Self) -> Self:
+        # return make_fxp(self.val() + other.val(), self.n_frac, self.n_int + 2, self.signed)
         self.stored_int += other.stored_int
         return self
 
-    def __sub__(self, other: Self) -> Self:
+    def __isub__(self, other: Self) -> Self:
         self.stored_int -= other.stored_int
         return self
 
-    def __mul__(self, other: Self) -> Self:
+    def __mul__(self, other):
+        val = (self.stored_int * other.stored_int) >> self.n_frac
+        return Fxplite(val, self.n_int, self.n_frac, self.signed, self.fract_mul)
+
+    def __imul__(self, other: Self) -> Self:
         self.stored_int *= other.stored_int
+        self.stored_int >>= self.n_frac
         return self
 
     def __divmod__(self, other):
@@ -78,6 +121,11 @@ class Fxplite:
     def overflow(self):
         return self.stored_int > 2 ** (self.n_int + self.n_frac)
 
+    def as_interim_t(self):
+        self.n_frac *= 2
+        self.n_int *= 2
+        return self
+
 
 def make_fxp(val: float | int, n_int: int, n_frac: int, signed: bool = False) -> Fxplite:
     # stored_int = int(val)
@@ -101,14 +149,14 @@ def scalar_from_fxp(f: Fxplite) -> float | int:
 
 
 def main():
-    f = Fxplite(12, 3, 3, False, 2**3)
-    print(Fxplite(12, 2, 3, False, 2**3).val())
-    print(Fxplite(21, 2, 3, False, 2**3).val())
-    print(Fxplite(31, 2, 3, False, 2**3).val())
+    f = Fxplite(12, 3, 3, False, 2 ** 3)
+    print(Fxplite(12, 2, 3, False, 2 ** 3).val())
+    print(Fxplite(21, 2, 3, False, 2 ** 3).val())
+    print(Fxplite(31, 2, 3, False, 2 ** 3).val())
 
     for i in range(f.int_range() + 1):
         b = bin(i)
-        f = Fxplite(i, 3, 3, False, 2**3)
+        f = Fxplite(i, 3, 3, False, 2 ** 3)
         s = scalar_from_fxp(f)
         print(f"{b=} {s=}")
 
